@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/sfreiberg/gotwilio"
@@ -44,12 +46,15 @@ func watch(events chan fsnotify.Event, errors chan error) {
 		case err := <-errors:
 			log.Println(err)
 		case evt := <-events:
-			if evt.Op == fsnotify.Create {
-				timer = time.After(3 * time.Second)
+			name := filepath.Base(evt.Name)
+			if evt.Op == fsnotify.Create &&
+				strings.HasPrefix(name, "scan") &&
+				strings.HasSuffix(name, ".jpg") {
+				timer = time.After(5 * time.Second)
 				count++
 			}
 		// I don't want to send an update for every file in a batch update,
-		// so the timer is present to make sure we wait three seconds after
+		// so the timer is present to make sure we wait five seconds after
 		// the last file creation before sending the SMS.
 		case <-timer:
 			timer = nil
